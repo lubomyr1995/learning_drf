@@ -3,13 +3,14 @@ from django.http import QueryDict
 from rest_framework.exceptions import ValidationError
 
 from cars.models import CarModel
+from cars.serializers import CarSerializer
 
 
 def car_filter(query: QueryDict) -> QuerySet:
     qs = CarModel.objects.all()
 
-    print(query)
-    print(query.items())
+    # print('query', query)
+    # print('items', list(query.items()))
     for k, v in query.items():
         match k:
             # Price
@@ -35,14 +36,15 @@ def car_filter(query: QueryDict) -> QuerySet:
                 qs = qs.filter(brand__istartswith=v)
             case 'brand_end_with':
                 qs = qs.filter(brand__iendswith=v)
-            case 'brand_search':
+            case 'brand_contains':
                 qs = qs.filter(brand__icontains=v)
             # Ordering
-            case 'order_by':
-                order_field = v
-                if order_field.lstrip('-') not in ['brand', 'price', 'year']:
-                    raise ValidationError(f"Cannot sort by field {order_field}")
-                qs = qs.order_by(order_field)
+            case 'order':
+                fields = CarSerializer.Meta.fields
+                fields = [*fields, *[f'-{field}' for field in fields]]
+                if v not in fields:
+                    raise ValidationError({"details": f'Please choice order from {", ".join(fields)}'})
+                qs = qs.order_by(v)
             case _:
                 raise ValidationError(f"Filter {k} not supported")
     return qs
