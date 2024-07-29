@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 from apps.cars.models import CarModel
 
@@ -7,23 +8,23 @@ class CarSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarModel
         # fields = '__all__'
-        fields = ('id', 'brand', 'price', 'year', 'created_at', 'updated_at')
+        fields = ('id', 'brand', 'price', 'year', 'body_type', 'created_at', 'updated_at')
+
+    # Validation in serializer
+    def validate(self, data):
+        if data['brand'] == 'XXX':
+            raise ValidationError({'detail': 'this db not accept this brand'})
+        return super().validate(data)
+
+    def validate_year(self, year):
+        if year == 1999:
+            raise ValidationError({'details': 'year eq 1999'})
+        return year
 
 
-class CarSerializerBegin(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    brand = serializers.CharField(max_length=100)
-    price = serializers.IntegerField()
-    year = serializers.IntegerField()
-    created_at = serializers.DateTimeField()
-    updated_at = serializers.DateTimeField()
+class CarSerializerWithAP(serializers.ModelSerializer):
 
-    def create(self, validated_data):
-        car = CarModel.objects.create(**validated_data)
-        return car
-
-    def update(self, instance, validated_data):
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-            instance.save()
-            return instance
+    class Meta:
+        model = CarModel
+        fields = ('id', 'brand', 'price', 'year', 'body_type', 'auto_park', 'created_at', 'updated_at')
+        read_only_fields = ('auto_park', 'created_at', 'updated_at')
