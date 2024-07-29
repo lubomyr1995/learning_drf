@@ -18,11 +18,11 @@ class CarSerializerBegin(serializers.Serializer):
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
 
-    def create(self, validated_data):
+    def create(self, validated_data:dict) -> CarModel:
         car = CarModel.objects.create(**validated_data)
         return car
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data: dict) -> CarModel:
         for key, value in validated_data.items():
             setattr(instance, key, value)
             instance.save()

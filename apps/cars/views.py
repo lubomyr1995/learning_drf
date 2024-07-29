@@ -7,6 +7,7 @@ from apps.cars.serializers import CarSerializer
 
 # GenericAPIView
 class CarListCreateView(ListCreateAPIView):
+    # queryset = CarModel.objects.all()
     serializer_class = CarSerializer
 
     def get_queryset(self):
