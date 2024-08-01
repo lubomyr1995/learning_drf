@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.relations import StringRelatedField
 from rest_framework.serializers import ValidationError
 
 from apps.cars.models import CarModel
@@ -23,6 +24,7 @@ class CarSerializer(serializers.ModelSerializer):
 
 
 class CarSerializerWithAP(serializers.ModelSerializer):
+    auto_park = StringRelatedField(read_only=True)
 
     class Meta:
         model = CarModel

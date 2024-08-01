@@ -8,3 +8,6 @@ class AutoParkModel(models.Model):
         ordering = ['id']
 
     name = models.CharField(max_length=255, validators=[v.MinLengthValidator(1)])
+
+    def __str__(self):
+        return self.name
