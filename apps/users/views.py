@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.users.models import UserModel as User
@@ -23,9 +23,11 @@ class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
 
 
 class UserToAdminView(GenericAPIView):
-    queryset = UserModel.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAdminUser,)
+
+    def get_queryset(self):
+        return UserModel.objects.exclude(pk=self.request.user.pk)
 
     def patch(self, *args, **kwargs):
         user = self.get_object()
@@ -44,6 +46,28 @@ class AdminToUserView(UserToAdminView):
         if not user.is_staff:
             return Response({'details': 'already exist is_staff=False'}, status=status.HTTP_400_BAD_REQUEST)
         user.is_staff = False
+        user.save()
+        serializer = self.serializer_class(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserBlockView(UserToAdminView):
+    def patch(self, *args, **kwargs):
+        user = self.get_object()
+        if not user.is_active:
+            return Response({'details': 'already exist is_active=False'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = False
+        user.save()
+        serializer = self.serializer_class(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserUnblockView(UserToAdminView):
+    def patch(self, *args, **kwargs):
+        user = self.get_object()
+        if user.is_active:
+            return Response({'details': 'already exist is_active=True'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = True
         user.save()
         serializer = self.serializer_class(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
