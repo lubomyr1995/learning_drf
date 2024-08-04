@@ -42,6 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
     @atomic
     def create(self, validated_data: dict):
         profile = validated_data.pop('profile')
-        user = User.objects.create_user(username=None, **validated_data)
+        user = User.objects.create_user(**validated_data)
         ProfileModel.objects.create(**profile, user=user)
         return user

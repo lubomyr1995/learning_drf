@@ -9,7 +9,7 @@ class CarSerializer(serializers.ModelSerializer):
     class Meta:
         model = CarModel
         # fields = '__all__'
-        fields = ('id', 'brand', 'price', 'year', 'body_type', 'created_at', 'updated_at')
+        fields = ('id', 'brand', 'price', 'year', 'body_type', 'photo', 'created_at', 'updated_at')
 
     # Validation in serializer
     def validate(self, data):
@@ -28,5 +28,12 @@ class CarSerializerWithAP(serializers.ModelSerializer):
 
     class Meta:
         model = CarModel
-        fields = ('id', 'brand', 'price', 'year', 'body_type', 'auto_park', 'created_at', 'updated_at')
+        fields = ('id', 'brand', 'price', 'year', 'body_type', 'photo', 'auto_park', 'created_at', 'updated_at')
         read_only_fields = ('auto_park', 'created_at', 'updated_at')
+
+
+class CarPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarModel
+        fields = ('photo',)
+        extra_kwargs = {'photo': {'required': True}}

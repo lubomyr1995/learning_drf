@@ -2,8 +2,10 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+
+from core.permissions.custom_permissions import IsAdminOrWriteOnly, IsSuperUser
 
 from apps.users.models import UserModel as User
 from apps.users.serializers import UserSerializer
@@ -14,17 +16,18 @@ UserModel: User = get_user_model()
 class UserListCreateAPIView(ListCreateAPIView):
     serializer_class = UserSerializer
     queryset = UserModel.objects.all()
+    permission_classes = (IsAdminOrWriteOnly,)
 
 
 class UserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     queryset = UserModel.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAdminUser,)
 
 
 class UserToAdminView(GenericAPIView):
     serializer_class = UserSerializer
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsSuperUser,)
 
     def get_queryset(self):
         return UserModel.objects.exclude(pk=self.request.user.pk)
