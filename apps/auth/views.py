@@ -1,3 +1,59 @@
-from django.shortcuts import render
+from django.contrib.auth import get_user_model
+from django.db.transaction import atomic
 
-# Create your views here.
+from rest_framework import status
+from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+
+from core.dataclasses.user_dataclass import User
+from core.services.email_service import EmailService
+from core.services.jwt_service import ActivateToken, JWTService, RecoveryToken
+
+from apps.auth.serializers import EmailSerializer
+from apps.users.models import UserModel as User
+from apps.users.serializers import UserSerializer
+
+UserModel: User = get_user_model()
+
+
+class ActivateAccountView(GenericAPIView):
+    permission_classes = (AllowAny,)
+
+    @staticmethod
+    def patch(self, *args, **kwargs):
+        activate_token = kwargs['token']
+        user = JWTService.verify_token(activate_token, ActivateToken)
+        user.is_active = True
+        user.save()
+        # return Response(data={'token': activate_token}, status=status.HTTP_200_OK)
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(GenericAPIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, *args, **kwargs):
+        email = self.request.data
+        serializer = EmailSerializer(data=email)
+        serializer.is_valid(raise_exception=True)
+        user_email = serializer.data.get('email')
+        user = get_object_or_404(User, email=user_email)
+        EmailService.recovery_password(user)
+        return Response(status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(GenericAPIView):
+    permission_classes = (AllowAny,)
+
+    @atomic
+    def post(self, *args, **kwargs):
+        new_password = self.request.data
+        recovery_token = kwargs['token']
+        user: User = JWTService.verify_token(recovery_token, RecoveryToken)
+        serializer = UserSerializer(data=new_password, partial=True)
+        serializer.is_valid(raise_exception=True)
+        user.set_password(new_password['password'])
+        user.save()
+        return Response({'details': 'Your password changed'}, status.HTTP_200_OK)
